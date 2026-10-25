@@ -1,0 +1,29 @@
+/* Override specific Tailwind utilities with PUP Theme Colors */
+.bg-primary { background-color: #800000 !important; }
+.text-primary { color: #800000 !important; }
+.bg-secondary { background-color: #FFD700 !important; }
+.text-secondary { color: #FFD700 !important; }
+.bg-background { background-color: #F8F9FA !important; }
+
+:root {
+  --color-primary: #560014;
+  --color-secondary: #7e5700;
+  --color-background: #f9f9ff;
+  --color-surface: #f9f9ff;
+  --color-on-surface: #111c2d;
+  --color-surface-container-low: #f0f3ff;
+  --color-error: #ba1a1a;
+}
+  
+.bg-surface-container-low { background-color: var(--color-surface-container-low); }
+.text-on-surface { color: var(--color-on-surface); }
+.text-error { color: var(--color-error); }
+
+#pup-floating-hud {
+    font-family: 'Inter', sans-serif !important;
+}
+
+@layer base {
+    html, body { margin: 0; padding: 0; overscroll-behavior: none; }
+    ::-webkit-scrollbar { display: none; }
+}

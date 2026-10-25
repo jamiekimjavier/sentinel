@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Sentinel Analytics Portal</title>
+<style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background: #f9f9ff; color: #111c2d; display: flex; height: 100vh; overflow: hidden; }
+    
+    .hidden { display: none !important; }
+    
+    /* SIDEBAR */
+    .sidebar { width: 280px; background: #f0f3ff; border-right: 1px solid #e5e7eb; padding: 24px 0; display: flex; flex-direction: column; flex-shrink: 0;}
+    .sidebar-header { display: flex; align-items: center; gap: 12px; padding: 0 24px 32px 24px; }
+    .shield-icon { background: #800000; color: white; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center;}
+    .sidebar-title { color: #800000; font-weight: bold; font-size: 20px; margin-bottom: 2px;}
+    .sidebar-subtitle { color: #7e5700; font-size: 12px; text-transform: uppercase; font-weight: 600;}
+    
+    .nav-group { font-size: 11px; text-transform: uppercase; color: #6b7280; font-weight: bold; padding: 0 24px; margin-bottom: 12px; letter-spacing: 0.5px;}
+    .nav-item { padding: 12px 24px; color: #4b5563; font-weight: 600; font-size: 14px; text-decoration: none; display: block; border-left: 4px solid transparent; cursor: pointer;}
+    .nav-item:hover { background: #e7eeff; color: #111c2d; }
+    .nav-item.active { background: #800000; color: white; border-left: 4px solid #FFD700; }
+    
+    /* MAIN CONTENT */
+    .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    
+    /* GLOBAL CONTEXT BAR */
+    .top-bar { height: 64px; background: rgba(249, 249, 255, 0.9); backdrop-filter: blur(8px); border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; flex-shrink: 0;}
+    .global-controls { display: flex; align-items: center; gap: 16px; }
+    .class-selector { padding: 8px 16px; border-radius: 8px; border: 2px solid #e5e7eb; font-weight: bold; color: #800000; background: white; font-size: 14px; cursor: pointer; outline: none;}
+    .class-selector:focus { border-color: #800000; }
+    
+    .user-profile { display: flex; align-items: center; gap: 12px; text-align: right;}
+    .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: #800000; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;}
+    
+    .content-area { flex: 1; padding: 40px; overflow-y: auto; position: relative; }
+    .header-tags { color: #7e5700; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;}
+    h1 { color: #800000; font-size: 32px; margin: 0 0 8px 0; font-weight: 800;}
+    p { color: #4b5563; margin: 0 0 32px 0; font-size: 14px;}
+    
+    /* METRICS BAR */
+    .metrics-container { display: flex; gap: 16px; margin-bottom: 32px; }
+    .metric-card { flex: 1; background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+    .metric-label { font-size: 11px; color: #6b7280; text-transform: uppercase; font-weight: bold; margin-bottom: 8px;}
+    .metric-value { font-size: 24px; font-weight: 800; color: #111c2d;}
+    .metric-sub { font-size: 13px; color: #6b7280; margin-top: 4px; font-weight: 500;}
+    
+    /* TABLE */
+    .table-card { background: white; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; margin-bottom: 32px;}
+    .table-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid #e5e7eb; background: #f9fafb;}
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { background: #800000; color: white; padding: 16px 24px; font-size: 13px; font-weight: 600; border-right: 1px solid rgba(255,255,255,0.1);}
+    th:last-child { border-right: none; }
+    td { padding: 16px 24px; border-bottom: 1px solid #e5e7eb; vertical-align: middle;}
+    tr:last-child td { border-bottom: none; }
+    .clickable-row { cursor: pointer; transition: background 0.2s; }
+    .clickable-row:hover { background: #f3f4f6; }
+    
+    /* CALENDAR SPECIFIC STYLES */
+    .cell-present { color: #16a34a; font-weight: bold; text-align: center; }
+    .cell-absent { color: #dc2626; font-weight: bold; text-align: center;}
+    .cell-late { color: #d97706; font-weight: bold; text-align: center;}
+    .th-date { text-align: center; font-size: 11px; }
+
+    /* STUDENT INFO STYLING */
+    .student-info { display: flex; align-items: center; gap: 16px;}
+    .student-initials { width: 40px; height: 40px; border-radius: 50%; background: #fce7f3; color: #be185d; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; flex-shrink: 0;}
+    .student-name { font-weight: bold; color: #111c2d; font-size: 15px;}
+    .student-email { color: #6b7280; font-size: 12px; margin-top: 2px;}
+    
+    /* STATUS PILLS */
+    .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 9999px; font-size: 12px; font-weight: bold; }
+    .status-Active { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;}
+    .status-Active::before { content: ''; width: 6px; height: 6px; background: #10b981; border-radius: 50%; }
+    .status-Taking { background: #fefce8; color: #a16207; border: 1px solid #fde047;}
+    .status-Taking::before { content: '✎'; font-size: 10px; }
+    .status-Idle { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa;}
+    .status-Idle::before { content: ''; width: 6px; height: 6px; background: #f97316; border-radius: 50%; }
+    .status-Disconnected { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;}
+    .status-Disconnected::before { content: ''; width: 6px; height: 6px; background: #ef4444; border-radius: 50%; }
+    .status-Offline { background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb;}
+    .status-Offline::before { content: ''; width: 6px; height: 6px; background: #9ca3af; border-radius: 50%; }
+    .status-Hidden { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa;}
+
+    /* ENGAGEMENT BAR */
+    .engagement-wrapper { display: flex; align-items: center; gap: 12px; }
+    .engagement-score { font-weight: 800; font-size: 14px; width: 32px;}
+    .engagement-track { flex: 1; height: 6px; background: #e5e7eb; border-radius: 4px; overflow: hidden;}
+    .engagement-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease;}
+    
+    /* BUTTONS */
+    .btn { padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; text-decoration:none;}
+    .btn-outline { border: 1px solid #d1d5db; background: white; color: #374151;}
+    .btn-outline:hover { background: #f3f4f6; }
+    .btn-vibe { background: #FFD700; color: #800000; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
+    .btn-vibe:hover { background: #facc15; }
+
+    /* MODAL STYLES */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .modal-content { background: white; width: 600px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+    .modal-header { background: #800000; color: white; padding: 24px; display: flex; justify-content: space-between; align-items: center; }
+    .modal-close { background: none; border: none; color: white; font-size: 24px; cursor: pointer; line-height: 1; opacity: 0.8; }
+    .modal-close:hover { opacity: 1; }
+    .modal-body { padding: 32px 24px; }
+    .stat-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; }
+    .stat-row:last-child { border: none; }
+    .stat-label { color: #6b7280; font-weight: bold; font-size: 13px; text-transform: uppercase; }
+    .stat-val { font-weight: 600; color: #111c2d; font-size: 14px; }
+    
+    /* MOCK TIMELINE */
+    .timeline { margin-top: 24px; }
+    .timeline-bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 8px; }
+    .seg-active { background: #16a34a; }
+    .seg-notes { background: #ca8a04; }
+    .seg-idle { background: #dc2626; }
+
+    /* PRINT LAYOUT (CRITICAL FOR EXPORTS) */
+    .print-header { display: none; }
+    @media print {
+        @page { margin: 1cm; size: landscape; }
+        body { background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; overflow: visible; height: auto; display: block; }
+        .sidebar, .top-bar, .global-controls, .btn, #vibe-check-btn { display: none !important; }
+        .main-wrapper, .content-area { overflow: visible !important; height: auto !important; padding: 0 !important; display: block !important; }
+        
+        /* Force Only Attendance View to Print */
+        #view-attendance { display: block !important; } 
+        #view-dashboard, #view-classes, #view-reports { display: none !important; }
+        
+        .table-card { box-shadow: none; border: 1px solid #ccc; margin: 0; }
+        th { color: black !important; background: #f3f4f6 !important; border-bottom: 2px solid black; }
+        .print-header { display: block !important; margin-bottom: 24px; text-align: center; }
+        .print-header h1 { font-size: 24px; color: black; margin-bottom: 4px; }
+        .print-header p { font-size: 14px; color: #555; margin: 0; }
+    }
+</style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="shield-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C7.58 2 4 5.58 4 10V22L8 18L12 22L16 18L20 22V10C20 5.58 16.42 2 12 2ZM12 13C10.34 13 9 11.66 9 10C9 8.34 10.34 7 12 7C13.66 7 15 8.34 15 10C15 11.66 13.66 13 12 13Z"/>
+                </svg>
+            </div>
+            <div>
+                <div class="sidebar-title">Sentinel</div>
+                <div class="sidebar-subtitle">Institutional Suite</div>
+            </div>
+        </div>
+        <div class="nav-group">Operations</div>
+        <a class="nav-item active" data-target="view-dashboard">Live Dashboard</a>
+        <a class="nav-item" data-target="view-attendance">Attendance Calendar</a>
+        <a class="nav-item" data-target="view-reports">Export Data</a>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="top-bar">
+            <div class="global-controls">
+                <span class="breadcrumbs">Active Context:</span>
+                <select id="global-class-select" class="class-selector">
+                    <option value="" disabled selected>Loading Classes...</option>
+                </select>
+            </div>
+            <div class="user-profile">
+                <div>
+                    <div style="font-weight: bold; font-size: 14px; color: #111c2d;" id="header-user-email">Instructor</div>
+                    <div style="font-size: 12px; color: #6b7280;">Lead Admin</div>
+                </div>
+                <div class="user-avatar" id="header-user-avatar">I</div>
+            </div>
+        </header>
+        
+        <main class="content-area">
+            
+            <!-- VIEW: LIVE DASHBOARD -->
+            <div id="view-dashboard" class="view-section">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <div class="header-tags">Live Telemetry</div>
+                        <h1>Real-Time Class Ledger</h1>
+                        <p>Live engagement metrics merged with class roster data. Click a student for detailed stats.</p>
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <button id="vibe-check-btn" class="btn btn-vibe">⚡ Send Vibe Check</button>
+                    </div>
+                </div>
+
+                <div class="metrics-container">
+                    <div class="metric-card">
+                        <div class="metric-label">Cohort Population (Active)</div>
+                        <div class="metric-value" style="color: #047857;" id="disp-active-count">0 / 0</div>
+                        <div class="metric-sub">Currently tracking in Meet</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Flagged / Deficient</div>
+                        <div class="metric-value" style="color: #dc2626;" id="disp-flagged-count">0</div>
+                        <div class="metric-sub">Idle, Disconnected, or Absent</div>
+                    </div>
+                    <div class="metric-card" style="background: #fdfaf2; border-color: #FFD700;">
+                        <div class="metric-label">Class Avg. Engagement</div>
+                        <div class="metric-value" style="color: #800000;" id="disp-class-avg">0%</div>
+                        <div class="metric-sub">Overall calculated health</div>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-header">
+                        <div style="font-weight: bold; color: #111c2d;">Live Telemetry Log</div>
+                        <div style="font-size: 12px; color: #6b7280;">Auto-syncs every 5s</div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student Identification</th>
+                                <th>Live Status</th>
+                                <th>Connected Time</th>
+                                <th>Telemetry Engagement</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <tr><td colspan="4" style="text-align:center; padding:40px; color:#6b7280;">Connecting to Firebase...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VIEW: ATTENDANCE SHEETS (CALENDAR FORMAT) -->
+            <div id="view-attendance" class="view-section hidden">
+                <div class="print-header">
+                    <h1>Sentinel Attendance & Engagement Report</h1>
+                    <p>Class Context: <span id="print-class-code" style="font-weight:bold;"></span> | Generated: <span id="print-date"></span></p>
+                    <p>Overall Class Health (Engagement): <span id="print-health" style="font-weight:bold; color:#800000;"></span></p>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <div class="header-tags">Historical Records</div>
+                        <h1>Attendance Calendar Matrix</h1>
+                        <p>Aggregated daily attendance states mapping directly to institutional records.</p>
+                    </div>
+                    <div style="display:flex; gap:12px;">
+                        <button class="btn btn-outline export-csv-btn">Download CSV</button>
+                        <button class="btn btn-outline export-pdf-btn">Export PDF</button>
+                    </div>
+                </div>
+                
+                <div class="table-card" id="print-area-calendar">
+                    <div class="table-header">
+                        <div style="font-weight: bold; color: #111c2d;">Weekly Session Log</div>
+                        <div style="font-size: 12px; color: #6b7280;">Rows: Students | Cols: Session Dates</div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr id="calendar-headers">
+                                <th>Student Email</th>
+                                <th class="th-date">Oct 19<br><span style="font-weight:normal;">Mon</span></th>
+                                <th class="th-date">Oct 20<br><span style="font-weight:normal;">Tue</span></th>
+                                <th class="th-date">Oct 21<br><span style="font-weight:normal;">Wed</span></th>
+                                <th class="th-date">Oct 22<br><span style="font-weight:normal;">Thu</span></th>
+                                <th class="th-date" style="background:#7e5700;">Today<br><span style="font-weight:normal;">Live</span></th>
+                                <th style="text-align:center;">Cumulative<br>Engagement</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VIEW: EXPORT REPORTS -->
+            <div id="view-reports" class="view-section hidden">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <div class="header-tags">Data Export</div>
+                        <h1>Export & Compliance</h1>
+                        <p>Generate verifiable ledger files for the currently selected class.</p>
+                    </div>
+                </div>
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                    <div style="background:white; padding:32px; border-radius:12px; border:1px solid #e5e7eb;">
+                        <h2 style="margin:0 0 8px 0; color:#800000;">Full Session PDF</h2>
+                        <p style="color:#6b7280; font-size:14px; margin-bottom:24px;">Exports the attendance calendar matrix into a beautiful, printer-friendly PDF report.</p>
+                        <button class="btn btn-outline export-pdf-btn" style="width:100%; justify-content:center;">Print / Save as PDF</button>
+                    </div>
+                    
+                    <div style="background:white; padding:32px; border-radius:12px; border:1px solid #e5e7eb;">
+                        <h2 style="margin:0 0 8px 0; color:#800000;">Raw CSV Data</h2>
+                        <p style="color:#6b7280; font-size:14px; margin-bottom:24px;">Exports raw telemetry scores and attendance states for spreadsheet integration (Excel/Sheets).</p>
+                        <button class="btn btn-outline export-csv-btn" style="width:100%; justify-content:center;">Download CSV Array</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- STUDENT DETAILED VIEW MODAL -->
+    <div id="student-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <div style="font-size:12px; text-transform:uppercase; font-weight:bold; letter-spacing:1px; color:#FFD700; margin-bottom:4px;">Detailed Profile</div>
+                    <h2 id="modal-name" style="margin:0; font-size:24px;">Student Name</h2>
+                </div>
+                <button id="close-modal" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="stat-row">
+                    <div class="stat-label">Institution Email</div>
+                    <div class="stat-val" id="modal-email">student@sentinel.edu</div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-label">Live Status</div>
+                    <div class="stat-val" id="modal-status"></div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-label">Net Engagement Score</div>
+                    <div class="stat-val" id="modal-score" style="font-size:18px; color:#800000; font-weight:900;">0%</div>
+                </div>
+                
+                <div class="timeline">
+                    <div class="stat-label">Session Timeline (Simulated)</div>
+                    <div class="timeline-bar" id="modal-timeline">
+                        <!-- Populated by JS based on engagement -->
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:10px; color:#9ca3af; margin-top:4px;">
+                        <span>Session Start</span>
+                        <span>Now</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script src="config.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

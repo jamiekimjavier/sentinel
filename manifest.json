@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Sentinel: Academic Telemetry",
+  "version": "13.0.0",
+  "description": "Class-code synchronized student engagement tracker and dashboard.",
+  "permissions": ["storage", "scripting", "tabs"],
+  "host_permissions": ["*://meet.google.com/*", "https://firestore.googleapis.com/*"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["*://meet.google.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "Sentinel Login",
+    "default_popup": "popup.html"
+  }
+}
